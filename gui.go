@@ -7,7 +7,7 @@ import (
 
 	"github.com/aarzilli/nucular"
 	// "github.com/aarzilli/nucular/label"
-	"github.com/aarzilli/nucular/command"
+
 	"github.com/aarzilli/nucular/rect"
 	"github.com/aarzilli/nucular/style"
 )
@@ -16,7 +16,15 @@ type FretUI struct {
 	frets FretBoard
 }
 
-func (f *FretUI) drawFrets(fb *FretBoard, s *style.Style, bounds rect.Rect, out *command.Buffer) {
+func (f *FretUI) drawFretDiagram(w *nucular.Window, fb *FretBoard) {
+	bounds, out := w.Custom(style.WidgetStateInactive)
+	if out == nil {
+		return
+	}
+
+	mw := w.Master()
+	s := mw.Style()
+
 	background := color.RGBA{0xff, 0xff, 0xff, 0xff}
 	foreground := color.RGBA{0, 0, 0, 0xff}
 	red := color.RGBA{0xff, 0, 0, 0xff}
@@ -50,15 +58,18 @@ func (f *FretUI) drawFrets(fb *FretBoard, s *style.Style, bounds rect.Rect, out 
 	x := boardBounds.X
 	y := boardBounds.Y + fretheight
 
-	fmt.Println("fretwidth", fretwidth)
+	// fmt.Println("fretwidth", fretwidth)
 
 	out.FillRect(bounds, 0, background)
+
+	// there is some rounding error between this and boardBounds.Max().Y
+	maxy := y + fretheight*fb.Frets
 
 	// Print fret grid
 	for i := 0; i < fb.Strings+1; i++ {
 		xpos := x + fretwidth*i
 		start := image.Point{xpos, y}
-		stop := image.Point{xpos, boardBounds.Max().Y}
+		stop := image.Point{xpos, maxy}
 		out.StrokeLine(start, stop, 2, foreground)
 	}
 	for i := 0; i < fb.Frets+1; i++ {
@@ -67,6 +78,8 @@ func (f *FretUI) drawFrets(fb *FretBoard, s *style.Style, bounds rect.Rect, out 
 		stop := image.Point{boardBounds.Max().X, ypos}
 		out.StrokeLine(start, stop, 2, foreground)
 	}
+
+	// fmt.Println("maxy", boardBounds.Max().Y, "max line y", y + fretheight * fb.Frets)
 
 	// Print fret numbers
 	for i := 0; i < fb.Frets+1; i++ {
@@ -91,7 +104,7 @@ func (f *FretUI) drawFrets(fb *FretBoard, s *style.Style, bounds rect.Rect, out 
 	for _, note := range fb.Notes {
 		box := rect.Rect{
 			X: x + note.String*fretwidth - circleW/2,
-			Y: y + (note.Fret - 1)*fretheight + (fretheight - circleW) / 2,
+			Y: y + (note.Fret-1)*fretheight + (fretheight-circleW)/2,
 			W: circleW,
 			H: circleW,
 		}
@@ -101,7 +114,7 @@ func (f *FretUI) drawFrets(fb *FretBoard, s *style.Style, bounds rect.Rect, out 
 		fH := nucular.FontHeight(s.Font)
 		fbox := rect.Rect{
 			X: x + note.String*fretwidth - fW/2,
-			Y: y + (note.Fret - 1)*fretheight + (fretheight-fH)/2,
+			Y: y + (note.Fret-1)*fretheight + (fretheight-fH)/2,
 			W: fW,
 			H: fH,
 		}
@@ -113,13 +126,9 @@ func (f *FretUI) update(w *nucular.Window) {
 	w.Row(25).Dynamic(1)
 	w.Label("helloworld", "LC")
 
-	w.Row(500).Dynamic(1)
-	bounds, out := w.Custom(style.WidgetStateInactive)
-	if out != nil {
-		mw := w.Master()
-		s := mw.Style()
-		f.drawFrets(&f.frets, s, bounds, out)
-	}
+	w.Row(500).Dynamic(2)
+	f.drawFretDiagram(w, &f.frets)
+	f.drawFretDiagram(w, &f.frets)
 }
 
 func GUIMain(version string) error {
