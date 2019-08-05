@@ -4,16 +4,94 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	"regexp"
+	"strings"
 
 	"github.com/aarzilli/nucular"
-	// "github.com/aarzilli/nucular/label"
-
+	"github.com/aarzilli/nucular/label"
 	"github.com/aarzilli/nucular/rect"
 	"github.com/aarzilli/nucular/style"
 )
 
 type FretUI struct {
-	frets FretBoard
+	boards []FretBoard
+
+	scalechords []string
+
+	columns int
+
+	root    string
+	scale   string
+	isScale bool
+	tuning  []string
+	error   string
+
+	rootEdit   nucular.TextEditor
+	tuningEdit nucular.TextEditor
+	searchEdit nucular.TextEditor
+}
+
+var (
+	tuningRe = regexp.MustCompile(`[ABCDEFGabcdefg]#?`)
+)
+
+func parseTuning(tuning string) ([]string, error) {
+	splits := tuningRe.FindAllString(tuning, -1)
+	if splits == nil {
+		return nil, fmt.Errorf("invalid tuning given")
+	}
+
+	fmt.Println(splits)
+
+	for i := range splits {
+		splits[i] = strings.TrimSpace(splits[i])
+		splits[i] = strings.ToUpper(splits[i])
+
+		found := false
+		for j := range Notes {
+			if splits[i] == Notes[j] {
+				found = true
+			}
+		}
+		if !found {
+			return nil, fmt.Errorf("invalid note '%s' given", splits[i])
+		}
+	}
+
+	return splits, nil
+}
+
+func addBoard(tuning []string, root, scale string, isScale bool) (*FretBoard, error) {
+	ret := &FretBoard{
+		Strings:      len(tuning),
+		Frets:        11,
+		StartingFret: 0,
+		Tuning:       tuning,
+	}
+
+	notes := []string{}
+	var err error
+
+	if isScale {
+		notes, err = GetScale(root, scale)
+	} else {
+		notes, err = GetChord(root, scale)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	err = ret.SetNotes(notes, NoteBlack)
+	if err != nil {
+		return nil, err
+	}
+
+	err = ret.SetNotes([]string{root}, NoteRoot)
+	if err != nil {
+		return nil, err
+	}
+
+	return ret, nil
 }
 
 func (f *FretUI) drawFretDiagram(w *nucular.Window, fb *FretBoard) {
@@ -128,39 +206,160 @@ func (f *FretUI) drawFretDiagram(w *nucular.Window, fb *FretBoard) {
 	}
 }
 
-func (f *FretUI) update(w *nucular.Window) {
-	w.Row(25).Dynamic(1)
-	w.Label("helloworld", "LC")
+func (f *FretUI) FretWidget(w *nucular.Window, title string, idx int) int {
+	var deleteidx int = -1
+	if sw := w.GroupBegin(title, nucular.WindowBorder|nucular.WindowNoScrollbar); sw != nil {
+		sw.Row(30).Ratio(0.95, 0.05)
+		sw.Label(title, "LC")
+		if sw.Button(label.T("Close"), false) {
+			deleteidx = idx
+		} else {
+			sw.Row(0).Dynamic(1)
+			f.drawFretDiagram(sw, &f.boards[idx])
+		}
+		sw.GroupEnd()
+	}
+	return deleteidx
+}
 
-	w.Row(700).Dynamic(2)
-	f.drawFretDiagram(w, &f.frets)
-	f.drawFretDiagram(w, &f.frets)
+func (f *FretUI) update(w *nucular.Window) {
+	ratios := []float64{0.1, 0.4, 0.3, 0.1, 0.1}
+	w.Row(30).Ratio(ratios...)
+	w.Label("Root", "LC")
+	w.Label("Scale or Chord", "LC")
+	w.Label("Tuning", "LC")
+	w.Label("", "LC")
+	if w.Button(label.T("Options"), false) {
+
+	}
+
+	w.Row(30).Ratio(ratios...)
+
+	if w := w.Combo(label.T(f.root), 400, nil); w != nil {
+		w.Row(30).Dynamic(1)
+		f.rootEdit.Active = true
+		a := f.rootEdit.Edit(w)
+		if a&nucular.EditCommitted != 0 {
+			f.root = string(f.rootEdit.Buffer)
+			// TODO validation
+			w.Close()
+		}
+		for i := range Notes {
+			if w.MenuItem(label.TA(Notes[i], "LC")) {
+				f.root = Notes[i]
+			}
+		}
+	}
+
+	if w := w.Combo(label.T(f.scale), 400, nil); w != nil {
+		w.Row(30).Dynamic(1)
+		f.searchEdit.Active = true
+		a := f.searchEdit.Edit(w)
+		if a&nucular.EditCommitted != 0 {
+			f.scale = string(f.searchEdit.Buffer)
+			// TODO validation
+			w.Close()
+		}
+
+		for i := range f.scalechords {
+			if w.MenuItem(label.TA(f.scalechords[i], "LC")) {
+				ret := strings.Replace(f.scalechords[i], "Scale: ", "", 1)
+				f.isScale = (ret != f.scalechords[i])
+
+				ret = strings.Replace(ret, "Chord: ", "", 1)
+				f.scale = ret
+			}
+		}
+	}
+
+	var err error
+	a := f.tuningEdit.Edit(w)
+	if a&nucular.EditCommitted != 0 {
+		f.tuning, err = parseTuning(string(f.tuningEdit.Buffer))
+		if err != nil {
+			f.error = fmt.Sprintf("Error: %v", err)
+		} else {
+			f.error = ""
+			f.tuningEdit.Buffer = []rune(strings.Join(f.tuning, ""))
+		}
+	}
+	if w.Button(label.T("Add"), false) {
+		f.tuning, err = parseTuning(string(f.tuningEdit.Buffer))
+		if err != nil {
+			f.error = fmt.Sprintf("Error: %v", err)
+		} else {
+			f.error = ""
+			f.tuningEdit.Buffer = []rune(strings.Join(f.tuning, ""))
+			var fb *FretBoard
+			fb, err = addBoard(f.tuning, f.root, f.scale, f.isScale)
+			if err != nil {
+				f.error = fmt.Sprintf("Error: %v", err)
+			} else {
+				typ := "scale"
+				if !f.isScale {
+					typ = "chord"
+				}
+				fb.Name = fmt.Sprintf("%s %s %s in %s",
+					f.root, f.scale, typ,
+					strings.Join(f.tuning, ""))
+				f.boards = append(f.boards, *fb)
+			}
+		}
+	}
+	w.Label("", "LC")
+	w.Row(30).Dynamic(1)
+	w.Label(f.error, "LC")
+
+	var deleteidx int = -1
+	for i := range f.boards {
+		if i%f.columns == 0 {
+			w.Row(700).Dynamic(f.columns)
+		}
+		di := f.FretWidget(w, f.boards[i].Name, i)
+		if di >= 0 {
+			deleteidx = di
+		}
+	}
+
+	// Remove the fretboard if user wanted to close one of them
+	if deleteidx >= 0 {
+		f.boards = append(f.boards[:deleteidx], f.boards[deleteidx+1:]...)
+	}
+}
+
+func NewFretUI() *FretUI {
+	fu := &FretUI{
+		columns: 3,
+		root:    "D",
+		scale:   "Natural Minor",
+		isScale: true,
+		tuning:  []string{"D", "A", "D", "G", "B", "E"},
+	}
+
+	fu.rootEdit.Flags = nucular.EditField
+	fu.rootEdit.Maxlen = 6
+
+	fu.searchEdit.Flags = nucular.EditField
+	fu.searchEdit.Maxlen = 64
+
+	fu.tuningEdit.Flags = nucular.EditField
+	fu.tuningEdit.Maxlen = 64
+	fu.tuningEdit.Buffer = []rune(strings.Join(fu.tuning, ""))
+
+	fu.scalechords = make([]string, 0, len(Scales)+len(Chords))
+	for s := range Scales {
+		fu.scalechords = append(fu.scalechords, "Scale: "+s)
+	}
+
+	for c := range Chords {
+		fu.scalechords = append(fu.scalechords, "Chord: "+c)
+	}
+
+	return fu
 }
 
 func GUIMain(version string) error {
-	fu := &FretUI{
-		frets: FretBoard{
-			Strings:      6,
-			Frets:        12,
-			StartingFret: 0,
-			Notes: []Note{
-				Note{2, 0, "X", NoteUnvoiced},
-				Note{1, 1, "Z", NoteGrey},
-				Note{3, 2, "Z", NoteRoot},
-				Note{4, 7, "Z", NoteBlack},
-			},
-		},
-	}
-
-	// Print a scale
-	scl, err := GetScale("D", "Natural Minor")
-	if err != nil {
-		return err
-	}
-	fu.frets.InitGuitar()
-	fu.frets.Clear()
-	fu.frets.SetNotes(scl, NoteBlack)
-	fu.frets.SetNotes([]string{"D"}, NoteRoot)
+	fu := NewFretUI()
 
 	title := fmt.Sprintf("Fretnoter %s", version)
 	w := nucular.NewMasterWindowSize(0, title, image.Point{640, 630}, fu.update)

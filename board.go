@@ -17,6 +17,7 @@ type Note struct {
 }
 
 type FretBoard struct {
+	Name         string
 	Tuning       []string
 	Strings      int
 	Frets        int
@@ -43,7 +44,7 @@ func (f *FretBoard) SetNotes(notes []string, ntype NoteType) error {
 	}
 
 	for s := 0; s < f.Strings; s++ {
-		for fr := 0; fr < f.Frets + 1; fr++ {
+		for fr := 0; fr < f.Frets+1; fr++ {
 			note, _ := GetNote(f.Tuning[s], fr)
 			if _, ok := notemap[note]; ok {
 				f.Notes = append(f.Notes, Note{
