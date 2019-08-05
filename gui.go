@@ -55,6 +55,12 @@ func (f *FretUI) drawFretDiagram(w *nucular.Window, fb *FretBoard) {
 	fretwidth := boardBounds.W / fb.Strings
 	fretheight := boardBounds.H / (fb.Frets + 1)
 
+	// Get a font that is relatively scaled (the 12.0 is from Style.DefaultFont)
+	fontscaling := (float64(fretheight) * 0.4) / 12.0
+	s.DefaultFont(fontscaling)
+	fnt := s.Font
+	s.DefaultFont(s.Scaling) // Get the default font back
+
 	x := boardBounds.X
 	y := boardBounds.Y + fretheight
 
@@ -84,14 +90,14 @@ func (f *FretUI) drawFretDiagram(w *nucular.Window, fb *FretBoard) {
 	// Print fret numbers
 	for i := 0; i < fb.Frets+1; i++ {
 		fS := fmt.Sprintf("%d", i+fb.StartingFret)
-		fH := nucular.FontHeight(s.Font)
+		fH := nucular.FontHeight(fnt)
 		box := rect.Rect{
 			X: x - borderX/2,
 			Y: y + fretheight*i - fH/2,
 			W: borderX,
 			H: fretheight,
 		}
-		out.DrawText(box, fS, s.Font, black)
+		out.DrawText(box, fS, fnt, black)
 	}
 
 	circleW := fretheight
@@ -110,15 +116,15 @@ func (f *FretUI) drawFretDiagram(w *nucular.Window, fb *FretBoard) {
 		}
 		out.FillCircle(box, circleColors[note.Type].back)
 
-		fW := nucular.FontWidth(s.Font, note.Name)
-		fH := nucular.FontHeight(s.Font)
+		fW := nucular.FontWidth(fnt, note.Name)
+		fH := nucular.FontHeight(fnt)
 		fbox := rect.Rect{
 			X: x + note.String*fretwidth - fW/2,
 			Y: y + (note.Fret-1)*fretheight + (fretheight-fH)/2,
 			W: fW,
 			H: fH,
 		}
-		out.DrawText(fbox, note.Name, s.Font, circleColors[note.Type].fore)
+		out.DrawText(fbox, note.Name, fnt, circleColors[note.Type].fore)
 	}
 }
 
