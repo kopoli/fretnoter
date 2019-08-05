@@ -44,11 +44,11 @@ func (f *FretUI) drawFrets(fb *FretBoard, s *style.Style, bounds rect.Rect, out 
 		H: bounds.H - (borderY * 2),
 	}
 
-	x := boardBounds.X
-	y := boardBounds.Y
-
 	fretwidth := boardBounds.W / fb.Strings
-	fretheight := boardBounds.H / fb.Frets
+	fretheight := boardBounds.H / (fb.Frets + 1)
+
+	x := boardBounds.X
+	y := boardBounds.Y + fretheight
 
 	fmt.Println("fretwidth", fretwidth)
 
@@ -85,12 +85,13 @@ func (f *FretUI) drawFrets(fb *FretBoard, s *style.Style, bounds rect.Rect, out 
 	if fretheight > fretwidth {
 		circleW = fretwidth
 	}
+	circleW = circleW * 95 / 100
 
 	// Print note circles and texts
 	for _, note := range fb.Notes {
 		box := rect.Rect{
 			X: x + note.String*fretwidth - circleW/2,
-			Y: y + note.Fret*fretheight,
+			Y: y + (note.Fret - 1)*fretheight + (fretheight - circleW) / 2,
 			W: circleW,
 			H: circleW,
 		}
@@ -100,7 +101,7 @@ func (f *FretUI) drawFrets(fb *FretBoard, s *style.Style, bounds rect.Rect, out 
 		fH := nucular.FontHeight(s.Font)
 		fbox := rect.Rect{
 			X: x + note.String*fretwidth - fW/2,
-			Y: y + note.Fret*fretheight + (fretheight-fH)/2,
+			Y: y + (note.Fret - 1)*fretheight + (fretheight-fH)/2,
 			W: fW,
 			H: fH,
 		}
@@ -112,7 +113,7 @@ func (f *FretUI) update(w *nucular.Window) {
 	w.Row(25).Dynamic(1)
 	w.Label("helloworld", "LC")
 
-	w.Row(300).Dynamic(1)
+	w.Row(500).Dynamic(1)
 	bounds, out := w.Custom(style.WidgetStateInactive)
 	if out != nil {
 		mw := w.Master()
@@ -128,9 +129,10 @@ func GUIMain(version string) error {
 			Frets:        6,
 			StartingFret: 0,
 			Notes: []Note{
+				Note{2, 0, "X", NoteUnvoiced},
 				Note{1, 1, "Z", NoteUnvoiced},
 				Note{3, 2, "Z", NoteRoot},
-				Note{4, 2, "Z", NoteBlack},
+				Note{4, 7, "Z", NoteBlack},
 			},
 		},
 	}
