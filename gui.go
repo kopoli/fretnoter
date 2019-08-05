@@ -35,7 +35,7 @@ func (f *FretUI) drawFretDiagram(w *nucular.Window, fb *FretBoard) {
 		fore color.RGBA
 	}
 
-	circleColors := map[int]noteColor{
+	circleColors := map[NoteType]noteColor{
 		NoteUnvoiced: noteColor{white, black},
 		NoteRoot:     noteColor{red, black},
 		NoteBlack:    noteColor{black, white},
@@ -132,7 +132,7 @@ func (f *FretUI) update(w *nucular.Window) {
 	w.Row(25).Dynamic(1)
 	w.Label("helloworld", "LC")
 
-	w.Row(500).Dynamic(2)
+	w.Row(700).Dynamic(2)
 	f.drawFretDiagram(w, &f.frets)
 	f.drawFretDiagram(w, &f.frets)
 }
@@ -141,16 +141,26 @@ func GUIMain(version string) error {
 	fu := &FretUI{
 		frets: FretBoard{
 			Strings:      6,
-			Frets:        6,
+			Frets:        12,
 			StartingFret: 0,
 			Notes: []Note{
 				Note{2, 0, "X", NoteUnvoiced},
-				Note{1, 1, "Z", NoteUnvoiced},
+				Note{1, 1, "Z", NoteGrey},
 				Note{3, 2, "Z", NoteRoot},
 				Note{4, 7, "Z", NoteBlack},
 			},
 		},
 	}
+
+	// Print a scale
+	scl, err := GetScale("D", "Natural Minor")
+	if err != nil {
+		return err
+	}
+	fu.frets.InitGuitar()
+	fu.frets.Clear()
+	fu.frets.SetNotes(scl, NoteBlack)
+	fu.frets.SetNotes([]string{"D"}, NoteRoot)
 
 	title := fmt.Sprintf("Fretnoter %s", version)
 	w := nucular.NewMasterWindowSize(0, title, image.Point{640, 630}, fu.update)

@@ -33,7 +33,7 @@ var Chords = map[string][]int{
 	"aug7":       []int{0, 4, 8, 10},
 }
 
-func notePosition(note string) (int, error) {
+func NotePosition(note string) (int, error) {
 	for i := range Notes {
 		if Notes[i] == note {
 			return i, nil
@@ -42,8 +42,17 @@ func notePosition(note string) (int, error) {
 	return -1, fmt.Errorf("note '%s' doesn't exist", note)
 }
 
+func GetNote(note string, steps int) (string, error) {
+	pos, err := NotePosition(note)
+	if err != nil {
+		return "", err
+	}
+
+	return Notes[(pos+steps)%len(Notes)], nil
+}
+
 func GetScale(note, scale string) ([]string, error) {
-	pos, err := notePosition(note)
+	pos, err := NotePosition(note)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +72,7 @@ func GetScale(note, scale string) ([]string, error) {
 }
 
 func GetChord(note, chord string) ([]string, error) {
-	pos, err := notePosition(note)
+	pos, err := NotePosition(note)
 	if err != nil {
 		return nil, err
 	}
