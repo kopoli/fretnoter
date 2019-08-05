@@ -25,8 +25,8 @@ func (f *FretUI) drawFretDiagram(w *nucular.Window, fb *FretBoard) {
 	mw := w.Master()
 	s := mw.Style()
 
-	background := color.RGBA{0xff, 0xff, 0xff, 0xff}
-	foreground := color.RGBA{0, 0, 0, 0xff}
+	white := color.RGBA{0xff, 0xff, 0xff, 0xff}
+	black := color.RGBA{0, 0, 0, 0xff}
 	red := color.RGBA{0xff, 0, 0, 0xff}
 	grey := color.RGBA{0x80, 0x80, 0x80, 0xff}
 
@@ -36,10 +36,10 @@ func (f *FretUI) drawFretDiagram(w *nucular.Window, fb *FretBoard) {
 	}
 
 	circleColors := map[int]noteColor{
-		NoteUnvoiced: noteColor{background, foreground},
-		NoteRoot:     noteColor{red, foreground},
-		NoteBlack:    noteColor{foreground, background},
-		NoteGrey:     noteColor{grey, background},
+		NoteUnvoiced: noteColor{white, black},
+		NoteRoot:     noteColor{red, black},
+		NoteBlack:    noteColor{black, white},
+		NoteGrey:     noteColor{grey, white},
 	}
 
 	borderX := bounds.W * 5 / 100
@@ -60,7 +60,7 @@ func (f *FretUI) drawFretDiagram(w *nucular.Window, fb *FretBoard) {
 
 	// fmt.Println("fretwidth", fretwidth)
 
-	out.FillRect(bounds, 0, background)
+	out.FillRect(bounds, 0, white)
 
 	// there is some rounding error between this and boardBounds.Max().Y
 	maxy := y + fretheight*fb.Frets
@@ -70,13 +70,13 @@ func (f *FretUI) drawFretDiagram(w *nucular.Window, fb *FretBoard) {
 		xpos := x + fretwidth*i
 		start := image.Point{xpos, y}
 		stop := image.Point{xpos, maxy}
-		out.StrokeLine(start, stop, 2, foreground)
+		out.StrokeLine(start, stop, 2, black)
 	}
 	for i := 0; i < fb.Frets+1; i++ {
 		ypos := y + fretheight*i
 		start := image.Point{x, ypos}
 		stop := image.Point{boardBounds.Max().X, ypos}
-		out.StrokeLine(start, stop, 2, foreground)
+		out.StrokeLine(start, stop, 2, black)
 	}
 
 	// fmt.Println("maxy", boardBounds.Max().Y, "max line y", y + fretheight * fb.Frets)
@@ -91,7 +91,7 @@ func (f *FretUI) drawFretDiagram(w *nucular.Window, fb *FretBoard) {
 			W: borderX,
 			H: fretheight,
 		}
-		out.DrawText(box, fS, s.Font, foreground)
+		out.DrawText(box, fS, s.Font, black)
 	}
 
 	circleW := fretheight
