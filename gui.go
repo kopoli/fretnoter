@@ -326,7 +326,7 @@ func NewFretUI() *FretUI {
 	fu := &FretUI{
 		columns: 4,
 		root:    "D",
-		scale:   "Natural Minor",
+		scale:   "Natural Minor (Aeolian)",
 		isScale: true,
 		tuning:  []string{"D", "A", "D", "G", "B", "E"},
 	}

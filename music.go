@@ -6,11 +6,16 @@ var Notes = []string{"A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", 
 
 // Scales as steps from the previous note
 var Scales = map[string][]int{
-	"Major":            []int{2, 2, 1, 2, 2, 2, 1},
-	"Natural Minor":    []int{2, 1, 2, 2, 1, 2, 2},
-	"Harmonic Minor":   []int{2, 1, 2, 2, 1, 3, 1},
-	"Pentatonic Major": []int{2, 2, 3, 2, 3},
-	"Pentatonic Minor": []int{3, 2, 2, 3, 2},
+	"Major (Ionian)":          []int{2, 2, 1, 2, 2, 2, 1},
+	"Dorian Mode":             []int{2, 1, 2, 2, 2, 1, 2},
+	"Phrygian Mode":           []int{1, 2, 2, 2, 1, 2, 2},
+	"Lydian Mode":             []int{2, 2, 2, 1, 2, 2, 1},
+	"Mixolydian Mode":         []int{2, 2, 1, 2, 2, 1, 2},
+	"Natural Minor (Aeolian)": []int{2, 1, 2, 2, 1, 2, 2},
+	"Locrian Mode":            []int{1, 2, 2, 1, 2, 2, 2},
+	"Harmonic Minor":          []int{2, 1, 2, 2, 1, 3, 1},
+	"Pentatonic Major":        []int{2, 2, 3, 2, 3},
+	"Pentatonic Minor":        []int{3, 2, 2, 3, 2},
 }
 
 // Chords as the distance from the root note
