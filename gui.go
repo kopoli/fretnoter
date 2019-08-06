@@ -142,8 +142,7 @@ func (f *FretUI) drawFretDiagram(w *nucular.Window, fb *FretBoard) {
 	x := boardBounds.X + fretwidth/2
 	y := boardBounds.Y + fretheight
 
-	// fmt.Println("fretwidth", fretwidth)
-
+	// Draw the background
 	out.FillRect(bounds, 0, white)
 
 	// there is some rounding error between this and boardBounds.Max()
@@ -163,8 +162,6 @@ func (f *FretUI) drawFretDiagram(w *nucular.Window, fb *FretBoard) {
 		stop := image.Point{maxx, ypos}
 		out.StrokeLine(start, stop, 2, black)
 	}
-
-	// fmt.Println("maxy", boardBounds.Max().Y, "max line y", y + fretheight * fb.Frets)
 
 	// Print fret numbers
 	for i := 0; i < fb.Frets+1; i++ {
@@ -229,10 +226,7 @@ func (f *FretUI) update(w *nucular.Window) {
 	w.Label("Root", "LC")
 	w.Label("Scale or Chord", "LC")
 	w.Label("Tuning", "LC")
-	w.Label("", "LC")
-	if w.Button(label.T("Options"), false) {
-
-	}
+	w.Label("Columns", "LC")
 
 	w.Row(30).Ratio(ratios...)
 
@@ -307,7 +301,7 @@ func (f *FretUI) update(w *nucular.Window) {
 			}
 		}
 	}
-	w.Label("", "LC")
+	w.PropertyInt("Cols:", 1, &f.columns, 5, 1, 1)
 	w.Row(30).Dynamic(1)
 	w.Label(f.error, "LC")
 
