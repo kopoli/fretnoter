@@ -25,13 +25,6 @@ type FretBoard struct {
 	Notes        []Note
 }
 
-func (f *FretBoard) InitGuitar() {
-	f.Strings = 6
-	f.Frets = 11
-	f.StartingFret = 0
-	f.Tuning = []string{"D", "A", "D", "G", "B", "E"}
-}
-
 func (f *FretBoard) SetNotes(notes []string, ntype NoteType) error {
 	var err error
 	notemap := map[string]bool{}
