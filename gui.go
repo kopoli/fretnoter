@@ -71,11 +71,14 @@ func addBoard(tuning []string, root, scale string, isScale bool) (*FretBoard, er
 
 	notes := []string{}
 	var err error
+	var boardtype string
 
 	if isScale {
 		notes, err = GetScale(root, scale)
+		boardtype = "scale"
 	} else {
 		notes, err = GetChord(root, scale)
+		boardtype = "chord"
 	}
 	if err != nil {
 		return nil, err
@@ -90,6 +93,11 @@ func addBoard(tuning []string, root, scale string, isScale bool) (*FretBoard, er
 	if err != nil {
 		return nil, err
 	}
+
+	ret.Name = fmt.Sprintf("%s %s %s\nTuning: %s\nNotes: %s",
+		root, scale, boardtype,
+		strings.Join(tuning, ""),
+		strings.Join(notes, " "))
 
 	return ret, nil
 }
@@ -207,8 +215,8 @@ func (f *FretUI) drawFretDiagram(w *nucular.Window, fb *FretBoard) {
 func (f *FretUI) FretWidget(w *nucular.Window, title string, idx int) int {
 	var deleteidx int = -1
 	if sw := w.GroupBegin(title, nucular.WindowBorder|nucular.WindowNoScrollbar); sw != nil {
-		sw.Row(30).Ratio(0.95, 0.05)
-		sw.Label(title, "LC")
+		sw.Row(55).Ratio(0.90, 0.10)
+		sw.Label(title, "LT")
 		if sw.Button(label.T("Close"), false) {
 			deleteidx = idx
 		} else {
@@ -226,6 +234,7 @@ func (f *FretUI) update(w *nucular.Window) {
 	w.Label("Root", "LC")
 	w.Label("Scale or Chord", "LC")
 	w.Label("Tuning", "LC")
+	w.Label("", "LC")
 	w.Label("Columns", "LC")
 
 	w.Row(30).Ratio(ratios...)
@@ -290,13 +299,6 @@ func (f *FretUI) update(w *nucular.Window) {
 			if err != nil {
 				f.error = fmt.Sprintf("Error: %v", err)
 			} else {
-				typ := "scale"
-				if !f.isScale {
-					typ = "chord"
-				}
-				fb.Name = fmt.Sprintf("%s %s %s in %s",
-					f.root, f.scale, typ,
-					strings.Join(f.tuning, ""))
 				f.boards = append(f.boards, *fb)
 			}
 		}
