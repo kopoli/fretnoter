@@ -139,18 +139,19 @@ func (f *FretUI) drawFretDiagram(w *nucular.Window, fb *FretBoard) {
 	fnt := s.Font
 	s.DefaultFont(s.Scaling) // Get the default font back
 
-	x := boardBounds.X
+	x := boardBounds.X + fretwidth/2
 	y := boardBounds.Y + fretheight
 
 	// fmt.Println("fretwidth", fretwidth)
 
 	out.FillRect(bounds, 0, white)
 
-	// there is some rounding error between this and boardBounds.Max().Y
-	maxy := y + fretheight*fb.Frets
+	// there is some rounding error between this and boardBounds.Max()
+	maxy := y + fretheight*(fb.Frets)
+	maxx := x + fretwidth*(fb.Strings-1)
 
 	// Print fret grid
-	for i := 0; i < fb.Strings+1; i++ {
+	for i := 0; i < fb.Strings; i++ {
 		xpos := x + fretwidth*i
 		start := image.Point{xpos, y}
 		stop := image.Point{xpos, maxy}
@@ -159,7 +160,7 @@ func (f *FretUI) drawFretDiagram(w *nucular.Window, fb *FretBoard) {
 	for i := 0; i < fb.Frets+1; i++ {
 		ypos := y + fretheight*i
 		start := image.Point{x, ypos}
-		stop := image.Point{boardBounds.Max().X, ypos}
+		stop := image.Point{maxx, ypos}
 		out.StrokeLine(start, stop, 2, black)
 	}
 
@@ -170,7 +171,7 @@ func (f *FretUI) drawFretDiagram(w *nucular.Window, fb *FretBoard) {
 		fS := fmt.Sprintf("%d", i+fb.StartingFret)
 		fH := nucular.FontHeight(fnt)
 		box := rect.Rect{
-			X: x - borderX/2,
+			X: x - fretwidth/2,
 			Y: y + fretheight*i - fH/2,
 			W: borderX,
 			H: fretheight,
@@ -329,7 +330,7 @@ func (f *FretUI) update(w *nucular.Window) {
 
 func NewFretUI() *FretUI {
 	fu := &FretUI{
-		columns: 3,
+		columns: 4,
 		root:    "D",
 		scale:   "Natural Minor",
 		isScale: true,
