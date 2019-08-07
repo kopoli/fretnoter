@@ -28,8 +28,9 @@ type FretUI struct {
 
 	saveState State
 
-	rootEdit   nucular.TextEditor
 	tuningEdit nucular.TextEditor
+	scalesearch string
+	sclist []string
 	searchEdit nucular.TextEditor
 }
 
@@ -241,13 +242,6 @@ func (f *FretUI) update(w *nucular.Window) {
 
 	if w := w.Combo(label.T(f.root), 400, nil); w != nil {
 		w.Row(30).Dynamic(1)
-		f.rootEdit.Active = true
-		a := f.rootEdit.Edit(w)
-		if a&nucular.EditCommitted != 0 {
-			f.root = string(f.rootEdit.Buffer)
-			// TODO validation
-			w.Close()
-		}
 		for i := range Notes {
 			if w.MenuItem(label.TA(Notes[i], "LC")) {
 				f.root = Notes[i]
@@ -259,16 +253,23 @@ func (f *FretUI) update(w *nucular.Window) {
 		w.Row(30).Dynamic(1)
 		f.searchEdit.Active = true
 		a := f.searchEdit.Edit(w)
+		if f.scalesearch != string(f.searchEdit.Buffer) {
+			f.scalesearch = string(f.searchEdit.Buffer)
+			f.sclist = f.FilterScaleChords(f.scalesearch)
+		}
 		if a&nucular.EditCommitted != 0 {
-			f.scale = string(f.searchEdit.Buffer)
-			// TODO validation
+			if len(f.sclist) > 0 {
+				f.scale = f.sclist[0]
+			} else {
+				f.scale = f.scalechords[0]
+			}
 			w.Close()
 		}
 
-		for i := range f.scalechords {
-			if w.MenuItem(label.TA(f.scalechords[i], "LC")) {
-				ret := strings.Replace(f.scalechords[i], "Scale: ", "", 1)
-				f.isScale = (ret != f.scalechords[i])
+		for i := range f.sclist {
+			if w.MenuItem(label.TA(f.sclist[i], "LC")) {
+				ret := strings.Replace(f.sclist[i], "Scale: ", "", 1)
+				f.isScale = (ret != f.sclist[i])
 
 				ret = strings.Replace(ret, "Chord: ", "", 1)
 				f.scale = ret
@@ -348,9 +349,6 @@ func NewFretUI() *FretUI {
 		tuning:  []string{"D", "A", "D", "G", "B", "E"},
 	}
 
-	fu.rootEdit.Flags = nucular.EditField
-	fu.rootEdit.Maxlen = 6
-
 	fu.searchEdit.Flags = nucular.EditField
 	fu.searchEdit.Maxlen = 64
 
@@ -366,6 +364,7 @@ func NewFretUI() *FretUI {
 	for c := range Chords {
 		fu.scalechords = append(fu.scalechords, "Chord: "+c)
 	}
+	fu.sclist = fu.scalechords
 
 	ss, err := Load()
 	if err == nil {
@@ -392,6 +391,25 @@ func NewFretUI() *FretUI {
 	}
 
 	return fu
+}
+
+func (f *FretUI) FilterScaleChords(filter string) []string {
+	if filter == "" {
+		return f.scalechords
+	}
+	re, err := regexp.Compile(`(?i)` +filter)
+	if err != nil {
+		return f.scalechords
+	}
+
+	var ret []string
+	for i := range f.scalechords {
+		if re.FindStringIndex(f.scalechords[i]) != nil {
+			ret = append(ret, f.scalechords[i])
+		}
+	}
+
+	return ret
 }
 
 func GUIMain(version string) error {
