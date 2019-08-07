@@ -26,6 +26,8 @@ type FretUI struct {
 	tuning  []string
 	error   string
 
+	saveState State
+
 	rootEdit   nucular.TextEditor
 	tuningEdit nucular.TextEditor
 	searchEdit nucular.TextEditor
@@ -300,12 +302,25 @@ func (f *FretUI) update(w *nucular.Window) {
 				f.error = fmt.Sprintf("Error: %v", err)
 			} else {
 				f.boards = append(f.boards, *fb)
+				f.saveState.Tuning = strings.Join(f.tuning, "")
+				f.saveState.Boards = append(f.saveState.Boards, BoardState{
+					Root:    f.root,
+					Scale:   f.scale,
+					IsScale: f.isScale,
+					Tuning:  strings.Join(f.tuning, ""),
+				})
+				_ = Save(&f.saveState)
 			}
 		}
 	}
 	w.PropertyInt("Cols:", 1, &f.columns, 5, 1, 1)
 	w.Row(30).Dynamic(1)
 	w.Label(f.error, "LC")
+
+	if f.columns != f.saveState.Columns {
+		f.saveState.Columns = f.columns
+		_ = Save(&f.saveState)
+	}
 
 	var deleteidx int = -1
 	for i := range f.boards {
@@ -321,6 +336,8 @@ func (f *FretUI) update(w *nucular.Window) {
 	// Remove the fretboard if user wanted to close one of them
 	if deleteidx >= 0 {
 		f.boards = append(f.boards[:deleteidx], f.boards[deleteidx+1:]...)
+		f.saveState.Boards = append(f.saveState.Boards[:deleteidx], f.saveState.Boards[deleteidx+1:]...)
+		_ = Save(&f.saveState)
 	}
 }
 
@@ -350,6 +367,30 @@ func NewFretUI() *FretUI {
 
 	for c := range Chords {
 		fu.scalechords = append(fu.scalechords, "Chord: "+c)
+	}
+
+	ss, err := Load()
+	if err == nil {
+		fu.saveState = *ss
+		fu.columns = ss.Columns
+		var tuning []string
+		tuning, err = parseTuning(ss.Tuning)
+		if err == nil {
+			fu.tuning = tuning
+		}
+
+		for i := range ss.Boards {
+			tuning, err = parseTuning(ss.Boards[i].Tuning)
+			if err != nil {
+				continue
+			}
+
+			var fb *FretBoard
+			fb, err = addBoard(tuning, ss.Boards[i].Root, ss.Boards[i].Scale, ss.Boards[i].IsScale)
+			if err == nil {
+				fu.boards = append(fu.boards, *fb)
+			}
+		}
 	}
 
 	return fu
