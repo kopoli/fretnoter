@@ -53,9 +53,6 @@ func (f *FretBoard) SetNotes(notes []string, ntype NoteType) error {
 	return nil
 }
 
-func (f *FretBoard) Print() {
-}
-
 func (f *FretBoard) Clear() {
 	f.Notes = nil
 }

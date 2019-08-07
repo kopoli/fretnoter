@@ -43,8 +43,6 @@ func parseTuning(tuning string) ([]string, error) {
 		return nil, fmt.Errorf("invalid tuning given")
 	}
 
-	fmt.Println(splits)
-
 	for i := range splits {
 		splits[i] = strings.TrimSpace(splits[i])
 		splits[i] = strings.ToUpper(splits[i])
