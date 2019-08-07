@@ -84,7 +84,7 @@ func addBoard(tuning []string, root, scale string, isScale bool) (*FretBoard, er
 		return nil, err
 	}
 
-	err = ret.SetNotes(notes, NoteBlack)
+	err = ret.SetNotes(notes[1:], NoteBlack)
 	if err != nil {
 		return nil, err
 	}
