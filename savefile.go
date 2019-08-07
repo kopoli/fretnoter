@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -52,8 +51,6 @@ func Load() (*State, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Println("Reading from", path)
 
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
