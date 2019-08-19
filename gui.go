@@ -416,7 +416,7 @@ func GUIMain(version string) error {
 	fu := NewFretUI()
 
 	title := fmt.Sprintf("Fretnoter %s", version)
-	w := nucular.NewMasterWindowSize(0, title, image.Point{640, 630}, fu.update)
+	w := nucular.NewMasterWindowSize(0, title, image.Point{700, 830}, fu.update)
 
 	w.SetStyle(style.FromTheme(style.DarkTheme, 1.0))
 
