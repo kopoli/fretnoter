@@ -14,6 +14,12 @@ var Scales = map[string][]int{
 	"Natural Minor (Aeolian)": []int{2, 1, 2, 2, 1, 2, 2},
 	"Locrian Mode":            []int{1, 2, 2, 1, 2, 2, 2},
 	"Harmonic Minor":          []int{2, 1, 2, 2, 1, 3, 1},
+	"Locrian nat6":            []int{1, 2, 2, 1, 3, 1, 2},
+	"Ionian #5":               []int{2, 2, 1, 3, 1, 2, 1},
+	"Ukranian minor":          []int{2, 1, 3, 1, 2, 1, 2},
+	"Phrygian dominant":       []int{1, 3, 1, 2, 1, 2, 2},
+	"Lydian #2":               []int{3, 1, 2, 1, 2, 2, 1},
+	"Super Locrian diminshed": []int{1, 2, 1, 2, 2, 1, 3},
 	"Pentatonic Major":        []int{2, 2, 3, 2, 3},
 	"Pentatonic Minor":        []int{3, 2, 2, 3, 2},
 }
