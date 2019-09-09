@@ -2,6 +2,8 @@ package main
 
 import "fmt"
 
+// https://gist.github.com/inky/3188870
+
 var Notes = []string{"A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"}
 
 // Scales as steps from the previous note

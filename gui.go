@@ -312,7 +312,7 @@ func (f *FretUI) update(w *nucular.Window) {
 			}
 		}
 	}
-	w.PropertyInt("Cols:", 1, &f.columns, 5, 1, 1)
+	w.PropertyInt("", 1, &f.columns, 5, 1, 1)
 	w.Row(30).Dynamic(1)
 	w.Label(f.error, "LC")
 
@@ -374,6 +374,7 @@ func NewFretUI() *FretUI {
 		tuning, err = parseTuning(ss.Tuning)
 		if err == nil {
 			fu.tuning = tuning
+			fu.tuningEdit.Buffer = []rune(strings.Join(fu.tuning, ""))
 		}
 
 		for i := range ss.Boards {
