@@ -249,7 +249,7 @@ func (f *FretUI) update(w *nucular.Window) {
 		}
 	}
 
-	if w := w.Combo(label.T(f.scale), 400, nil); w != nil {
+	if w := w.Combo(label.T(f.scale), 1200, nil); w != nil {
 		w.Row(30).Dynamic(1)
 		f.searchEdit.Active = true
 		a := f.searchEdit.Edit(w)
