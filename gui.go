@@ -70,7 +70,7 @@ func addBoard(tuning []string, root, scale string, isScale bool) (*FretBoard, er
 		Tuning:       tuning,
 	}
 
-	notes := []string{}
+	var notes []string
 	var err error
 	var boardtype string
 
