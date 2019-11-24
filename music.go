@@ -44,6 +44,7 @@ var Chords = map[string][]int{
 	"minmaj7":    []int{0, 3, 7, 11},
 	"augmaj7":    []int{0, 4, 8, 11},
 	"aug7":       []int{0, 4, 8, 10},
+	"7sus2":      []int{0, 5, 7, 10},
 }
 
 func NotePosition(note string) (int, error) {
