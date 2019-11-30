@@ -29,10 +29,10 @@ type FretUI struct {
 
 	saveState State
 
-	tuningEdit nucular.TextEditor
+	tuningEdit  nucular.TextEditor
 	scalesearch string
-	sclist []string
-	searchEdit nucular.TextEditor
+	sclist      []string
+	searchEdit  nucular.TextEditor
 }
 
 var (
@@ -406,7 +406,7 @@ func (f *FretUI) FilterScaleChords(filter string) []string {
 	if filter == "" {
 		return f.scalechords
 	}
-	re, err := regexp.Compile(`(?i)` +filter)
+	re, err := regexp.Compile(`(?i)` + filter)
 	if err != nil {
 		return f.scalechords
 	}
