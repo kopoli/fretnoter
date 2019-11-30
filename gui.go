@@ -11,6 +11,7 @@ import (
 	"github.com/aarzilli/nucular/label"
 	"github.com/aarzilli/nucular/rect"
 	"github.com/aarzilli/nucular/style"
+	"golang.org/x/mobile/event/key"
 )
 
 type FretUI struct {
@@ -230,6 +231,13 @@ func (f *FretUI) FretWidget(w *nucular.Window, title string, idx int) int {
 }
 
 func (f *FretUI) update(w *nucular.Window) {
+	for _, e := range w.Input().Keyboard.Keys {
+		switch {
+		case (e.Modifiers == key.ModControl && e.Code == key.CodeQ):
+			go w.Master().Close()
+		}
+	}
+
 	ratios := []float64{0.1, 0.4, 0.3, 0.1, 0.1}
 	w.Row(30).Ratio(ratios...)
 	w.Label("Root", "LC")
