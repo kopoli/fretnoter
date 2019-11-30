@@ -310,11 +310,15 @@ func (f *FretUI) update(w *nucular.Window) {
 			} else {
 				f.boards = append(f.boards, *fb)
 				f.saveState.Tuning = strings.Join(f.tuning, "")
+				tp := TypeScale
+				if !f.isScale {
+					tp = TypeChord
+				}
 				f.saveState.Boards = append(f.saveState.Boards, BoardState{
-					Root:    f.root,
-					Scale:   f.scale,
-					IsScale: f.isScale,
-					Tuning:  strings.Join(f.tuning, ""),
+					Name:   f.scale,
+					Type:   tp,
+					Root:   f.root,
+					Tuning: strings.Join(f.tuning, ""),
 				})
 				_ = Save(&f.saveState)
 			}
@@ -391,11 +395,19 @@ func NewFretUI() *FretUI {
 				continue
 			}
 
-			var fb *FretBoard
-			fb, err = addBoard(tuning, ss.Boards[i].Root, ss.Boards[i].Scale, ss.Boards[i].IsScale)
-			if err == nil {
-				fu.boards = append(fu.boards, *fb)
+			tp := ss.Boards[i].Type
+			if tp == TypeScale || tp == TypeChord {
+				isscale := true
+				if tp == TypeChord {
+					isscale = false
+				}
+				var fb *FretBoard
+				fb, err = addBoard(tuning, ss.Boards[i].Root, ss.Boards[i].Name, isscale)
+				if err == nil {
+					fu.boards = append(fu.boards, *fb)
+				}
 			}
+
 		}
 	}
 

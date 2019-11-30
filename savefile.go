@@ -10,11 +10,16 @@ import (
 	"github.com/OpenPeeDeeP/xdg"
 )
 
+const (
+	TypeScale = "Scale"
+	TypeChord = "Chord"
+)
+
 type BoardState struct {
-	Root    string
-	Scale   string
-	IsScale bool
-	Tuning  string
+	Name   string
+	Type   string
+	Root   string
+	Tuning string
 }
 
 type State struct {
