@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -62,6 +63,8 @@ func Load() (*State, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	fmt.Println("Loaded configuration from:", path)
 
 	return &ret, nil
 }
