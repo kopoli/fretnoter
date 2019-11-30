@@ -1,6 +1,10 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"sort"
+	"strings"
+)
 
 // https://gist.github.com/inky/3188870
 
@@ -104,4 +108,63 @@ func GetChord(note, chord string) ([]string, error) {
 	}
 
 	return ret, nil
+}
+
+func IsChordInScale(chordNotes, scaleNotes []string) bool {
+	for i := range chordNotes {
+		found := false
+		for j := range scaleNotes {
+			if chordNotes[i] == scaleNotes[j] {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return false
+		}
+	}
+	return true
+}
+
+// Get the chords that can be played with the notes in the given scale
+func GetChordsInScale(root, scale string) ([]string, error) {
+	scalenotes, err := GetScale(root, scale)
+	if err != nil {
+		return nil, err
+	}
+
+	scalechords := map[string][]string{}
+
+	// Get the chords in a map with the Note name as the key
+	for i := range Notes {
+		for j := range Chords {
+			notes, err := GetChord(Notes[i], j)
+			if err != nil {
+				return nil, err
+			}
+			if IsChordInScale(notes, scalenotes) {
+				scalechords[Notes[i]] = append(scalechords[Notes[i]], j)
+			}
+		}
+		sort.Strings(scalechords[Notes[i]])
+	}
+
+	fmt.Println(scalenotes)
+	fmt.Println(scalechords)
+
+	pos, err := NotePosition(root)
+	if err != nil {
+		return nil, err
+	}
+
+	var ret []string
+
+	for i := range Notes {
+		note := Notes[(pos+i)%len(Notes)]
+		ret = append(ret, fmt.Sprintf("%2s: %v", note, strings.Join(scalechords[note], " ")))
+	}
+
+	fmt.Println(ret)
+
+	return ret, err
 }
