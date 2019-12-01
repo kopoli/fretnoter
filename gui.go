@@ -20,9 +20,10 @@ type infoBoard struct {
 	FretBoard
 
 	// List board contents
-	Root   string
-	Scale  string
-	Chords []string
+	Root       string
+	Scale      string
+	ScaleNotes []string
+	Chords     ChordMap
 }
 
 type FretUI struct {
@@ -122,9 +123,8 @@ func addChordListBoard(tuning []string, root, scale string) (*infoBoard, error) 
 		Scale: scale,
 	}
 	var err error
-	var notes []string
 
-	notes, err = GetScale(root, scale)
+	ret.ScaleNotes, err = GetScale(root, scale)
 	if err != nil {
 		return nil, err
 	}
@@ -135,7 +135,7 @@ func addChordListBoard(tuning []string, root, scale string) (*infoBoard, error) 
 	}
 
 	ret.Name = fmt.Sprintf("%s %s chords\nTuning: %s\nNotes: %s",
-		root, scale, strings.Join(tuning, ""), strings.Join(notes, " "))
+		root, scale, strings.Join(tuning, ""), strings.Join(ret.ScaleNotes, " "))
 
 	return ret, nil
 }
@@ -274,8 +274,18 @@ func (f *FretUI) ChordListWidget(w *nucular.Window, title string, idx int) int {
 		if sw.Button(label.T("Close"), false) {
 			deleteidx = idx
 		} else {
-			sw.Row(0).Dynamic(1)
-			sw.Label(strings.Join(f.boards[idx].Chords, "\n"), "LT")
+			for _, note := range f.boards[idx].ScaleNotes {
+				ch := f.boards[idx].Chords[note]
+				sw.Row(20).Dynamic(1)
+				sw.Label(note, "LT")
+				chordsperrow := 3
+				for j := range ch {
+					if (j % chordsperrow) == 0 {
+						sw.Row(20).Dynamic(chordsperrow)
+					}
+					sw.Button(label.T(ch[j]), false)
+				}
+			}
 		}
 		sw.GroupEnd()
 	}

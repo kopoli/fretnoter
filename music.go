@@ -126,14 +126,16 @@ func IsChordInScale(chordNotes, scaleNotes []string) bool {
 	return true
 }
 
+type ChordMap map[string][]string
+
 // Get the chords that can be played with the notes in the given scale
-func GetChordsInScale(root, scale string) ([]string, error) {
+func GetChordsInScale(root, scale string) (ChordMap, error) {
 	scalenotes, err := GetScale(root, scale)
 	if err != nil {
 		return nil, err
 	}
 
-	scalechords := map[string][]string{}
+	scalechords := ChordMap{}
 
 	// Get the chords in a map with the Note name as the key
 	for i := range Notes {
@@ -157,16 +159,16 @@ func GetChordsInScale(root, scale string) ([]string, error) {
 		return nil, err
 	}
 
-	var ret []string
+	var chords []string
 
 	for i := range Notes {
 		note := Notes[(pos+i)%len(Notes)]
 		if len(scalechords[note]) > 0 {
-			ret = append(ret, fmt.Sprintf("%2s: %v", note, strings.Join(scalechords[note], ", ")))
+			chords = append(chords, fmt.Sprintf("%2s: %v", note, strings.Join(scalechords[note], ", ")))
 		}
 	}
 
-	fmt.Println(ret)
+	fmt.Println(chords)
 
-	return ret, err
+	return scalechords, err
 }
