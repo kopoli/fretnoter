@@ -26,6 +26,13 @@ type infoBoard struct {
 	Chords     ChordMap
 }
 
+type NewFretBoard struct {
+	Tuning  []string
+	Root    string
+	Scale   string
+	IsScale bool
+}
+
 type FretUI struct {
 	boards []infoBoard
 
@@ -45,6 +52,9 @@ type FretUI struct {
 	scalesearch string
 	sclist      []string
 	searchEdit  nucular.TextEditor
+
+	// A fretboard to add in the next round
+	newFretBoard *NewFretBoard
 }
 
 var (
@@ -283,13 +293,44 @@ func (f *FretUI) ChordListWidget(w *nucular.Window, title string, idx int) int {
 					if (j % chordsperrow) == 0 {
 						sw.Row(20).Dynamic(chordsperrow)
 					}
-					sw.Button(label.T(ch[j]), false)
+					if sw.Button(label.T(ch[j]), false) {
+						f.newFretBoard = &NewFretBoard{
+							Tuning:  f.tuning,
+							Root:    note,
+							Scale:   ch[j],
+							IsScale: false,
+						}
+					}
 				}
 			}
 		}
 		sw.GroupEnd()
 	}
 	return deleteidx
+}
+
+// Add a new fretboard data to display and save
+func (f *FretUI) AddFretBoard(tuning []string, root, scale string, isScale bool) error {
+	fb, err := addBoard(tuning, root, scale, isScale)
+	if err != nil {
+		return err
+	}
+
+	var ib infoBoard
+	ib.FretBoard = *fb
+	f.boards = append(f.boards, ib)
+	tp := TypeScale
+	if !isScale {
+		tp = TypeChord
+	}
+	f.saveState.Boards = append(f.saveState.Boards, BoardState{
+		Name:   scale,
+		Type:   tp,
+		Root:   root,
+		Tuning: strings.Join(f.tuning, ""),
+	})
+	err = Save(&f.saveState)
+	return err
 }
 
 func (f *FretUI) update(w *nucular.Window) {
@@ -358,33 +399,25 @@ func (f *FretUI) update(w *nucular.Window) {
 			f.tuningEdit.Buffer = []rune(strings.Join(f.tuning, ""))
 		}
 	}
+
+	if f.newFretBoard != nil {
+		err = f.AddFretBoard(f.newFretBoard.Tuning, f.newFretBoard.Root, f.newFretBoard.Scale, f.newFretBoard.IsScale)
+		if err != nil {
+			f.error = fmt.Sprintf("Error: %v", err)
+		}
+		f.newFretBoard = nil
+	}
+
 	if w.Button(label.T("Frets"), false) {
 		f.tuning, err = parseTuning(string(f.tuningEdit.Buffer))
 		if err != nil {
 			f.error = fmt.Sprintf("Error: %v", err)
 		} else {
-			f.error = ""
-			f.tuningEdit.Buffer = []rune(strings.Join(f.tuning, ""))
-			var fb *FretBoard
-			fb, err = addBoard(f.tuning, f.root, f.scale, f.isScale)
+			f.saveState.Tuning = strings.Join(f.tuning, "")
+
+			err = f.AddFretBoard(f.tuning, f.root, f.scale, f.isScale)
 			if err != nil {
 				f.error = fmt.Sprintf("Error: %v", err)
-			} else {
-				var ib infoBoard
-				ib.FretBoard = *fb
-				f.boards = append(f.boards, ib)
-				f.saveState.Tuning = strings.Join(f.tuning, "")
-				tp := TypeScale
-				if !f.isScale {
-					tp = TypeChord
-				}
-				f.saveState.Boards = append(f.saveState.Boards, BoardState{
-					Name:   f.scale,
-					Type:   tp,
-					Root:   f.root,
-					Tuning: strings.Join(f.tuning, ""),
-				})
-				_ = Save(&f.saveState)
 			}
 		}
 	}
