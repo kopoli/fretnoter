@@ -13,6 +13,7 @@ import (
 const (
 	TypeScale = "Scale"
 	TypeChord = "Chord"
+	TypeList  = "List"
 )
 
 type BoardState struct {

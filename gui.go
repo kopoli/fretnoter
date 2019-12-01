@@ -14,8 +14,19 @@ import (
 	"golang.org/x/mobile/event/key"
 )
 
+type infoBoard struct {
+	Type string
+
+	FretBoard
+
+	// List board contents
+	Root   string
+	Scale  string
+	Chords []string
+}
+
 type FretUI struct {
-	boards []FretBoard
+	boards []infoBoard
 
 	scalechords []string
 
@@ -104,7 +115,32 @@ func addBoard(tuning []string, root, scale string, isScale bool) (*FretBoard, er
 	return ret, nil
 }
 
-func (f *FretUI) drawFretDiagram(w *nucular.Window, fb *FretBoard) {
+func addChordListBoard(tuning []string, root, scale string) (*infoBoard, error) {
+	ret := &infoBoard{
+		Type:  TypeList,
+		Root:  root,
+		Scale: scale,
+	}
+	var err error
+	var notes []string
+
+	notes, err = GetScale(root, scale)
+	if err != nil {
+		return nil, err
+	}
+
+	ret.Chords, err = GetChordsInScale(root, scale)
+	if err != nil {
+		return nil, err
+	}
+
+	ret.Name = fmt.Sprintf("%s %s chords\nTuning: %s\nNotes: %s",
+		root, scale, strings.Join(tuning, ""), strings.Join(notes, " "))
+
+	return ret, nil
+}
+
+func (f *FretUI) drawFretDiagram(w *nucular.Window, fb *infoBoard) {
 	bounds, out := w.Custom(style.WidgetStateInactive)
 	if out == nil {
 		return
@@ -230,6 +266,22 @@ func (f *FretUI) FretWidget(w *nucular.Window, title string, idx int) int {
 	return deleteidx
 }
 
+func (f *FretUI) ChordListWidget(w *nucular.Window, title string, idx int) int {
+	var deleteidx int = -1
+	if sw := w.GroupBegin(title, nucular.WindowBorder|nucular.WindowNoScrollbar); sw != nil {
+		sw.Row(55).Ratio(0.90, 0.10)
+		sw.Label(title, "LT")
+		if sw.Button(label.T("Close"), false) {
+			deleteidx = idx
+		} else {
+			sw.Row(0).Dynamic(1)
+			sw.Label(strings.Join(f.boards[idx].Chords, "\n"), "LT")
+		}
+		sw.GroupEnd()
+	}
+	return deleteidx
+}
+
 func (f *FretUI) update(w *nucular.Window) {
 	for _, e := range w.Input().Keyboard.Keys {
 		switch {
@@ -238,7 +290,7 @@ func (f *FretUI) update(w *nucular.Window) {
 		}
 	}
 
-	ratios := []float64{0.1, 0.4, 0.3, 0.1, 0.1}
+	ratios := []float64{0.1, 0.4, 0.2, 0.1, 0.1, 0.1}
 	w.Row(30).Ratio(ratios...)
 	w.Label("Root", "LC")
 	w.Label("Scale or Chord", "LC")
@@ -296,7 +348,7 @@ func (f *FretUI) update(w *nucular.Window) {
 			f.tuningEdit.Buffer = []rune(strings.Join(f.tuning, ""))
 		}
 	}
-	if w.Button(label.T("Add"), false) {
+	if w.Button(label.T("Frets"), false) {
 		f.tuning, err = parseTuning(string(f.tuningEdit.Buffer))
 		if err != nil {
 			f.error = fmt.Sprintf("Error: %v", err)
@@ -308,7 +360,9 @@ func (f *FretUI) update(w *nucular.Window) {
 			if err != nil {
 				f.error = fmt.Sprintf("Error: %v", err)
 			} else {
-				f.boards = append(f.boards, *fb)
+				var ib infoBoard
+				ib.FretBoard = *fb
+				f.boards = append(f.boards, ib)
 				f.saveState.Tuning = strings.Join(f.tuning, "")
 				tp := TypeScale
 				if !f.isScale {
@@ -324,7 +378,35 @@ func (f *FretUI) update(w *nucular.Window) {
 			}
 		}
 	}
+	if w.Button(label.T("Chords"), false) {
+		if !f.isScale {
+			f.error = fmt.Sprintf("Given scale is not a scale: %s", f.scale)
+		} else {
+			f.tuning, err = parseTuning(string(f.tuningEdit.Buffer))
+			if err != nil {
+				f.error = fmt.Sprintf("Error: %v", err)
+			} else {
+				f.error = ""
+				ib, err := addChordListBoard(f.tuning, f.root, f.scale)
+				if err != nil {
+					f.error = fmt.Sprintf("Error: %v", err)
+				} else {
+					f.boards = append(f.boards, *ib)
+					f.saveState.Tuning = strings.Join(f.tuning, "")
+					f.saveState.Boards = append(f.saveState.Boards, BoardState{
+						Name:   f.scale,
+						Type:   TypeList,
+						Root:   f.root,
+						Tuning: strings.Join(f.tuning, ""),
+					})
+					_ = Save(&f.saveState)
+				}
+			}
+		}
+	}
+
 	w.PropertyInt("", 1, &f.columns, 5, 1, 1)
+
 	w.Row(30).Dynamic(1)
 	w.Label(f.error, "LC")
 
@@ -338,7 +420,12 @@ func (f *FretUI) update(w *nucular.Window) {
 		if i%f.columns == 0 {
 			w.Row(700).Dynamic(f.columns)
 		}
-		di := f.FretWidget(w, f.boards[i].Name, i)
+		var di int
+		if f.boards[i].Type == TypeList {
+			di = f.ChordListWidget(w, f.boards[i].Name, i)
+		} else {
+			di = f.FretWidget(w, f.boards[i].Name, i)
+		}
 		if di >= 0 {
 			deleteidx = di
 		}
@@ -404,7 +491,14 @@ func NewFretUI() *FretUI {
 				var fb *FretBoard
 				fb, err = addBoard(tuning, ss.Boards[i].Root, ss.Boards[i].Name, isscale)
 				if err == nil {
-					fu.boards = append(fu.boards, *fb)
+					var ib infoBoard
+					ib.FretBoard = *fb
+					fu.boards = append(fu.boards, ib)
+				}
+			} else {
+				ib, err := addChordListBoard(tuning, ss.Boards[i].Root, ss.Boards[i].Name)
+				if err == nil {
+					fu.boards = append(fu.boards, *ib)
 				}
 			}
 
