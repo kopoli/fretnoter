@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"sort"
-	"strings"
 )
 
 // https://gist.github.com/inky/3188870
@@ -150,25 +149,6 @@ func GetChordsInScale(root, scale string) (ChordMap, error) {
 		}
 		sort.Strings(scalechords[Notes[i]])
 	}
-
-	fmt.Println(scalenotes)
-	fmt.Println(scalechords)
-
-	pos, err := NotePosition(root)
-	if err != nil {
-		return nil, err
-	}
-
-	var chords []string
-
-	for i := range Notes {
-		note := Notes[(pos+i)%len(Notes)]
-		if len(scalechords[note]) > 0 {
-			chords = append(chords, fmt.Sprintf("%2s: %v", note, strings.Join(scalechords[note], ", ")))
-		}
-	}
-
-	fmt.Println(chords)
 
 	return scalechords, err
 }
