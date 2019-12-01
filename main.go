@@ -14,7 +14,7 @@ func fault(err error, message string, arg ...string) {
 }
 
 func main() {
-	err := GUIMain("v0")
+	err := GUIMain("v0.5")
 	fault(err, "Running GUI failed")
 
 	os.Exit(0)
