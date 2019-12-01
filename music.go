@@ -161,7 +161,9 @@ func GetChordsInScale(root, scale string) ([]string, error) {
 
 	for i := range Notes {
 		note := Notes[(pos+i)%len(Notes)]
-		ret = append(ret, fmt.Sprintf("%2s: %v", note, strings.Join(scalechords[note], " ")))
+		if len(scalechords[note]) > 0 {
+			ret = append(ret, fmt.Sprintf("%2s: %v", note, strings.Join(scalechords[note], ", ")))
+		}
 	}
 
 	fmt.Println(ret)
