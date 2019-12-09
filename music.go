@@ -29,6 +29,7 @@ var Scales = map[string][]int{
 	"Dominant Diminished":      []int{1, 2, 1, 2, 1, 2, 1, 2},
 	"Pentatonic Major":         []int{2, 2, 3, 2, 3},
 	"Pentatonic Minor":         []int{3, 2, 2, 3, 2},
+	"Metallica":                []int{1, 1, 1, 2, 1, 1, 1, 2, 2},
 }
 
 // Chords as the distance from the root note
