@@ -176,7 +176,7 @@ func (f *FretUI) drawFretDiagram(w *nucular.Window, fb *infoBoard) {
 		NoteGrey:     {grey, white},
 	}
 
-	borderX := bounds.W * 5 / 100
+	borderX := bounds.W * 10 / 100
 	borderY := bounds.H * 5 / 100
 
 	boardBounds := rect.Rect{
@@ -195,7 +195,13 @@ func (f *FretUI) drawFretDiagram(w *nucular.Window, fb *infoBoard) {
 	fnt := s.Font
 	s.DefaultFont(s.Scaling) // Get the default font back
 
-	x := boardBounds.X + fretwidth/2
+	// Maximum width of the fret number box
+	fretnumWidth := nucular.FontWidth(fnt, "00") + (bounds.W * 5 / 100)
+
+	// Shift the board to the right a bit so it isn't on top of the numbers
+	boardShiftX := bounds.W * 2 / 100
+
+	x := boardBounds.X + fretwidth/2 + boardShiftX
 	y := boardBounds.Y + fretheight
 
 	// Draw the background
@@ -221,10 +227,10 @@ func (f *FretUI) drawFretDiagram(w *nucular.Window, fb *infoBoard) {
 
 	// Print fret numbers
 	for i := 0; i < fb.Frets+1; i++ {
-		fS := fmt.Sprintf("%d", i+fb.StartingFret)
+		fS := fmt.Sprintf("%2d", i+fb.StartingFret)
 		fH := nucular.FontHeight(fnt)
 		box := rect.Rect{
-			X: x - fretwidth/2,
+			X: x - fretnumWidth - boardShiftX,
 			Y: y + fretheight*i - fH/2,
 			W: borderX,
 			H: fretheight,
