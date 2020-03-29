@@ -170,10 +170,10 @@ func (f *FretUI) drawFretDiagram(w *nucular.Window, fb *infoBoard) {
 	}
 
 	circleColors := map[NoteType]noteColor{
-		NoteUnvoiced: noteColor{white, black},
-		NoteRoot:     noteColor{red, black},
-		NoteBlack:    noteColor{black, white},
-		NoteGrey:     noteColor{grey, white},
+		NoteUnvoiced: {white, black},
+		NoteRoot:     {red, black},
+		NoteBlack:    {black, white},
+		NoteGrey:     {grey, white},
 	}
 
 	borderX := bounds.W * 5 / 100
@@ -261,7 +261,7 @@ func (f *FretUI) drawFretDiagram(w *nucular.Window, fb *infoBoard) {
 }
 
 func (f *FretUI) FretWidget(w *nucular.Window, title string, idx int) int {
-	var deleteidx int = -1
+	var deleteidx = -1
 	if sw := w.GroupBegin(title, nucular.WindowBorder|nucular.WindowNoScrollbar); sw != nil {
 		sw.Row(55).Ratio(0.90, 0.10)
 		sw.Label(title, "LT")
@@ -277,7 +277,7 @@ func (f *FretUI) FretWidget(w *nucular.Window, title string, idx int) int {
 }
 
 func (f *FretUI) ChordListWidget(w *nucular.Window, title string, idx int) int {
-	var deleteidx int = -1
+	var deleteidx = -1
 	if sw := w.GroupBegin(title, nucular.WindowBorder|nucular.WindowNoScrollbar); sw != nil {
 		sw.Row(55).Ratio(0.90, 0.10)
 		sw.Label(title, "LT")
@@ -458,7 +458,7 @@ func (f *FretUI) update(w *nucular.Window) {
 		_ = Save(&f.saveState)
 	}
 
-	var deleteidx int = -1
+	var deleteidx = -1
 	for i := range f.boards {
 		if i%f.columns == 0 {
 			w.Row(700).Dynamic(f.columns)
