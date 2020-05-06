@@ -6,6 +6,14 @@ import (
 	"strings"
 )
 
+var (
+	version     = "Undefined"
+	timestamp   = "Undefined"
+	buildGOOS   = "Undefined"
+	buildGOARCH = "Undefined"
+	progVersion = "" + version
+)
+
 func fault(err error, message string, arg ...string) {
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "Error: %s%s: %s\n", message, strings.Join(arg, " "), err)
@@ -14,7 +22,7 @@ func fault(err error, message string, arg ...string) {
 }
 
 func main() {
-	err := GUIMain("v0.5")
+	err := GUIMain(progVersion)
 	fault(err, "Running GUI failed")
 
 	os.Exit(0)
