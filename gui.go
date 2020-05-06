@@ -491,10 +491,10 @@ func (f *FretUI) update(w *nucular.Window) {
 func NewFretUI() *FretUI {
 	fu := &FretUI{
 		columns: 4,
-		root:    "D",
-		scale:   "Natural Minor (Aeolian)",
+		root:    "E",
+		scale:   "Major (Ionian)",
 		isScale: true,
-		tuning:  []string{"D", "A", "D", "G", "B", "E"},
+		tuning:  []string{"E", "A", "D", "G", "B", "E"},
 	}
 
 	fu.searchEdit.Flags = nucular.EditField
