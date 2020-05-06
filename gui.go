@@ -353,6 +353,7 @@ func (f *FretUI) update(w *nucular.Window) {
 	w.Label("Scale or Chord", "LC")
 	w.Label("Tuning", "LC")
 	w.Label("", "LC")
+	w.Label("", "LC")
 	w.Label("Columns", "LC")
 
 	w.Row(30).Ratio(ratios...)
