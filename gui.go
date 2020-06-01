@@ -6,6 +6,7 @@ import (
 	"image/color"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/aarzilli/nucular"
 	"github.com/aarzilli/nucular/label"
@@ -46,6 +47,10 @@ type FretUI struct {
 	tuning  []string
 	error   string
 
+	width  int
+	height int
+
+	dirty     time.Time
 	saveState State
 
 	tuningEdit  nucular.TextEditor
@@ -148,6 +153,21 @@ func addChordListBoard(tuning []string, root, scale string) (*infoBoard, error) 
 		root, scale, strings.Join(tuning, ""), strings.Join(ret.ScaleNotes, " "))
 
 	return ret, nil
+}
+
+func (f *FretUI) setDirty() {
+	f.dirty = time.Now()
+}
+
+func (f *FretUI) saveConfig() {
+	if !f.dirty.IsZero() && time.Now().After(f.dirty.Add(time.Millisecond*500)) {
+		fmt.Println("Saving!")
+		err := Save(&f.saveState)
+		if err != nil {
+			f.error = fmt.Sprintf("Could not save configuration: %v", err)
+		}
+		f.dirty = time.Time{}
+	}
 }
 
 func (f *FretUI) drawFretDiagram(w *nucular.Window, fb *infoBoard) {
@@ -335,8 +355,8 @@ func (f *FretUI) AddFretBoard(tuning []string, root, scale string, isScale bool)
 		Root:   root,
 		Tuning: strings.Join(f.tuning, ""),
 	})
-	err = Save(&f.saveState)
-	return err
+	f.setDirty()
+	return nil
 }
 
 func (f *FretUI) update(w *nucular.Window) {
@@ -363,6 +383,8 @@ func (f *FretUI) update(w *nucular.Window) {
 		for i := range Notes {
 			if w.MenuItem(label.TA(Notes[i], "LC")) {
 				f.root = Notes[i]
+				f.saveState.Root = f.root
+				f.setDirty()
 			}
 		}
 	}
@@ -381,6 +403,8 @@ func (f *FretUI) update(w *nucular.Window) {
 			} else {
 				f.scale = f.scalechords[0]
 			}
+			f.saveState.ScaleChord = f.scale
+			f.setDirty()
 			w.Close()
 		}
 
@@ -391,6 +415,8 @@ func (f *FretUI) update(w *nucular.Window) {
 
 				ret = strings.Replace(ret, "Chord: ", "", 1)
 				f.scale = ret
+				f.saveState.ScaleChord = f.scale
+				f.setDirty()
 			}
 		}
 	}
@@ -421,6 +447,7 @@ func (f *FretUI) update(w *nucular.Window) {
 			f.error = fmt.Sprintf("Error: %v", err)
 		} else {
 			f.saveState.Tuning = strings.Join(f.tuning, "")
+			f.setDirty()
 
 			err = f.AddFretBoard(f.tuning, f.root, f.scale, f.isScale)
 			if err != nil {
@@ -449,7 +476,7 @@ func (f *FretUI) update(w *nucular.Window) {
 						Root:   f.root,
 						Tuning: strings.Join(f.tuning, ""),
 					})
-					_ = Save(&f.saveState)
+					f.setDirty()
 				}
 			}
 		}
@@ -462,7 +489,7 @@ func (f *FretUI) update(w *nucular.Window) {
 
 	if f.columns != f.saveState.Columns {
 		f.saveState.Columns = f.columns
-		_ = Save(&f.saveState)
+		f.setDirty()
 	}
 
 	var deleteidx = -1
@@ -485,8 +512,21 @@ func (f *FretUI) update(w *nucular.Window) {
 	if deleteidx >= 0 {
 		f.boards = append(f.boards[:deleteidx], f.boards[deleteidx+1:]...)
 		f.saveState.Boards = append(f.saveState.Boards[:deleteidx], f.saveState.Boards[deleteidx+1:]...)
-		_ = Save(&f.saveState)
+		f.setDirty()
 	}
+
+	if w.Bounds.H != f.height || w.Bounds.W != f.width {
+		fmt.Printf("old [%dx%d] new [%dx%d]\n",
+			f.width, f.height,
+			w.Bounds.W, w.Bounds.H)
+		f.height = w.Bounds.H
+		f.width = w.Bounds.W
+		f.saveState.Height = f.height
+		f.saveState.Width = f.width
+		f.setDirty()
+	}
+
+	f.saveConfig()
 }
 
 func NewFretUI() *FretUI {
@@ -496,6 +536,8 @@ func NewFretUI() *FretUI {
 		scale:   "Major (Ionian)",
 		isScale: true,
 		tuning:  []string{"E", "A", "D", "G", "B", "E"},
+		width:   700,
+		height:  830,
 	}
 
 	fu.searchEdit.Flags = nucular.EditField
@@ -518,6 +560,27 @@ func NewFretUI() *FretUI {
 	ss, err := Load()
 	if err == nil {
 		fu.saveState = *ss
+		for i := range Notes {
+			if ss.Root == Notes[i] {
+				fu.root = ss.Root
+			}
+		}
+
+		if _, ok := Scales[ss.ScaleChord]; ok {
+			fu.scale = ss.ScaleChord
+			fu.isScale = true
+		} else if _, ok := Chords[ss.ScaleChord]; ok {
+			fu.scale = ss.ScaleChord
+			fu.isScale = false
+		}
+
+		if ss.Width != 0 {
+			fu.width = ss.Width
+		}
+		if ss.Height != 0 {
+			fu.height = ss.Height
+		}
+
 		fu.columns = ss.Columns
 		var tuning []string
 		tuning, err = parseTuning(ss.Tuning)
@@ -581,7 +644,7 @@ func GUIMain(version string) error {
 	fu := NewFretUI()
 
 	title := fmt.Sprintf("Fretnoter %s", version)
-	w := nucular.NewMasterWindowSize(0, title, image.Point{700, 830}, fu.update)
+	w := nucular.NewMasterWindowSize(0, title, image.Point{fu.width, fu.height}, fu.update)
 
 	w.SetStyle(style.FromTheme(style.DarkTheme, 1.0))
 

@@ -24,8 +24,12 @@ type BoardState struct {
 }
 
 type State struct {
-	Columns int
-	Tuning  string
+	Root       string
+	ScaleChord string
+	Columns    int
+	Tuning     string
+	Width      int
+	Height     int
 
 	Boards []BoardState
 }
