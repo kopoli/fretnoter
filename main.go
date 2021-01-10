@@ -37,6 +37,7 @@ func main() {
 	optVersion := base.Flags.Bool("version", false, "Display version")
 
 	_ = appkit.NewCommand(base, "gui", "Start gui (default)")
+	_ = appkit.NewCommand(base, "query q", "Query music database")
 
 	err := base.Parse(os.Args[1:], opts)
 	if err == flag.ErrHelp {
@@ -56,6 +57,15 @@ func main() {
 	case "gui", "":
 		err = GUIMain(progVersion)
 		fault(err, "Running GUI failed")
+	case "query":
+		for i := range args {
+			ch, err := DetectChord(args[i])
+			fault(err, "Detecting chord failed")
+
+			if len(ch) > 0 {
+				fmt.Printf("%s: %s\n", args[i], strings.Join(ch, ", "))
+			}
+		}
 	}
 
 	os.Exit(0)
