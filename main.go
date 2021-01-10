@@ -1,9 +1,12 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"strings"
+
+	"github.com/kopoli/appkit"
 )
 
 var (
@@ -22,8 +25,38 @@ func fault(err error, message string, arg ...string) {
 }
 
 func main() {
-	err := GUIMain(progVersion)
-	fault(err, "Running GUI failed")
+	opts := appkit.NewOptions()
+
+	opts.Set("program-name", os.Args[0])
+	opts.Set("program-version", progVersion)
+	opts.Set("program-timestamp", timestamp)
+	opts.Set("program-buildgoos", buildGOOS)
+	opts.Set("program-buildgoarch", buildGOARCH)
+
+	base := appkit.NewCommand(nil, "", "Display fretboard notes")
+	optVersion := base.Flags.Bool("version", false, "Display version")
+
+	_ = appkit.NewCommand(base, "gui", "Start gui (default)")
+
+	err := base.Parse(os.Args[1:], opts)
+	if err == flag.ErrHelp {
+		os.Exit(0)
+	}
+	fault(err, "Parsing command line failed")
+
+	if *optVersion {
+		fmt.Println(appkit.VersionString(opts))
+		os.Exit(0)
+	}
+
+	cmd := opts.Get("cmdline-command", "")
+	args := appkit.SplitArguments(opts.Get("cmdline-args", ""))
+
+	switch cmd {
+	case "gui", "":
+		err = GUIMain(progVersion)
+		fault(err, "Running GUI failed")
+	}
 
 	os.Exit(0)
 }
