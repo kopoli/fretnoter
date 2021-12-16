@@ -164,10 +164,12 @@ func GetChordsInScale(root, scale string) (ChordMap, error) {
 
 func DetectChord(chord string) ([]string, error) {
 	notes := strings.Fields(chord)
+
 	if len(notes) == 0 {
 		return []string{}, fmt.Errorf("No notes detected")
 	}
 
+	// Convert notes into positions
 	pos := make([]int, len(notes))
 	for i := range notes {
 		p, err := NotePosition(notes[i])
@@ -178,6 +180,7 @@ func DetectChord(chord string) ([]string, error) {
 		pos[i] = p
 	}
 
+	// Modify the positions relative to root
 	root := pos[0]
 	for i := range pos {
 		pos[i] -= root
@@ -186,24 +189,45 @@ func DetectChord(chord string) ([]string, error) {
 		}
 	}
 
+	// Skip root note
+	pos = pos[1:]
+
+	// Get all the chords the notes are present in
 	chords := []string{}
 	for k, v := range Chords {
 		if len(pos) > len(v) {
 			continue
 		}
 
-		found := true
+		// Check that all given notes are present in the chord
+		found := false
 		for i := range pos {
-			if pos[i] != v[i] {
-				found = false
+			found = false
+			for j := range v {
+				if pos[i] == v[j] {
+					found = true
+					break
+				}
+			}
+
+			if !found {
 				break
 			}
 		}
+		if !found {
+			continue
+		}
 
+		// Print out all the chords
 		if found {
 			msg := notes[0] + k
 			if len(pos) < len(v) {
-				msg = msg + " (partial)"
+				n, _ := GetChord(notes[0], k)
+				desc := ""
+				if len(n) > len(notes) {
+					desc = "partial "
+				}
+				msg = fmt.Sprintf("%s (%s%s)", msg, desc, strings.Join(n, " "))
 			}
 			chords = append(chords, msg)
 		}
