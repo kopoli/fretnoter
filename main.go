@@ -34,10 +34,12 @@ func main() {
 	opts.Set("program-buildgoarch", buildGOARCH)
 
 	base := appkit.NewCommand(nil, "", "Display fretboard notes")
+	base.ArgumentHelp = ""
 	optVersion := base.Flags.Bool("version", false, "Display version")
 
 	_ = appkit.NewCommand(base, "gui", "Start gui (default)")
-	_ = appkit.NewCommand(base, "query q", "Query music database")
+	query := appkit.NewCommand(base, "query q", "Query music database")
+	query.ArgumentHelp = "NOTE [...]"
 
 	err := base.Parse(os.Args[1:], opts)
 	if err == flag.ErrHelp {
@@ -64,6 +66,8 @@ func main() {
 
 			if len(ch) > 0 {
 				fmt.Printf("%s: %s\n", args[i], strings.Join(ch, ", "))
+			} else {
+				fmt.Printf("%s: No chords found\n", args[i])
 			}
 		}
 	}
